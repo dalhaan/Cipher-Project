@@ -132,7 +132,7 @@ public class Encryptor {
 				dataBytes = inputBytes;
 			} else if (opmode == Cipher.DECRYPT_MODE) {
 				// Extract IV & encrypted data from inputFile
-				AESCipher aesCipher = new AESCipher(inputBytes);
+				AESCipher aesCipher = new AESCipher(inputBytes, true);
 				iv = aesCipher.getIv();
 				dataBytes = aesCipher.getEncryptedData();
 			}

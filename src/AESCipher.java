@@ -9,11 +9,13 @@ public class AESCipher extends Node {
 	 */
 	private static final long serialVersionUID = -2602551196507096482L;
 	private IvParameterSpec iv;
-	private byte[] encrypted;
+	private byte[] data;
+	private boolean isEncrypted;
 	
 	public AESCipher(byte[] encrypted, IvParameterSpec iv) {
-		this.encrypted = encrypted;
+		this.data = encrypted;
 		this.iv = iv;
+		this.isEncrypted = true;
 	}
 	
 	/**
@@ -27,15 +29,20 @@ public class AESCipher extends Node {
 		byte[] encryptedData = Arrays.copyOfRange(prefixed, 16, prefixed.length);
 		
 		this.iv = new IvParameterSpec(iv);
-		this.encrypted = encryptedData;
+		this.data = encryptedData;
+		this.isEncrypted = true;
 	}
 	
-	public AESCipher(byte[] prefixed) {
-		byte[] iv = Arrays.copyOfRange(prefixed, 0, 16); // Get 16 byte IV
-		byte[] encryptedData = Arrays.copyOfRange(prefixed, 16, prefixed.length);
+	public AESCipher(byte[] data, boolean isEncrypted) {
+		if (isEncrypted) {
+			byte[] iv = Arrays.copyOfRange(data, 0, 16); // Get 16 byte IV
+			data = Arrays.copyOfRange(data, 16, data.length);
 		
-		this.iv = new IvParameterSpec(iv);
-		this.encrypted = encryptedData;
+			this.iv = new IvParameterSpec(iv);
+		}
+		
+		this.data = data;
+		this.isEncrypted = isEncrypted;
 	}
 	
 	public IvParameterSpec getIv() {
@@ -43,17 +50,20 @@ public class AESCipher extends Node {
 	}
 	
 	public byte[] getEncryptedData() {
-		return encrypted;
+		return data;
 	}
 	
 	public String toString() {
-		byte[] prefixed = prefixIv(iv, encrypted);
-		String encoded = Base64.getEncoder().encodeToString(prefixed);
+		String encoded = Base64.getEncoder().encodeToString(isEncrypted?prefixIv(iv, data):data);
 		return encoded;
 	}
 	
 	public byte[] getBytes() {
-		return prefixIv(iv, encrypted);
+		if (isEncrypted) {
+			return prefixIv(iv, data);
+		} else {
+			return data;
+		}
 	}
 	
 	private byte[] prefixIv(IvParameterSpec iv, byte[] encryptedBytes) {
