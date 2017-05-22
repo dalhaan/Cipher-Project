@@ -21,7 +21,7 @@ import javax.swing.JTextPane;
 public class Encryptor {
 	private static final String ALGORITHM = "AES";
 	private static final String TRANSFORMATION = "AES/CBC/PKCS5PADDING";
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	public static String encrypt(String key, String value) {
 		try {
@@ -237,66 +237,66 @@ public class Encryptor {
 	 * catch (Exception e) { debug("Hashing error: " + e.getMessage()); } }
 	 */
 
-	public static void encryptAll(String key, JTextPane console) throws IOException {
+	public static void encryptAll(String key, GUI gui) throws IOException {
 		String path = Encryptor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-		console.setText(console.getText() + "Encrypting entire directory: " + path + "\n");
+		gui.updateConsole(String.format("Encrypting entire directory: %s\n", path));
 
 		File dir = new File(System.getProperty("user.dir"));
 		File[] all = dir.listFiles();
 		for (File file : all) {
 			if (file.isFile()) {
 				if (!file.getName().equals(new File(path).getName())) {
-					console.setText(console.getText() + "Encrypting " + file.getName() + "... ");
+					gui.updateConsole(String.format("Encrypting %s...", file.getName()));
 					try {
 						encrypt(key, file, file);
-						console.setText(console.getText() + "done\n");
+						gui.updateConsole(String.format("done\n"));
 					} catch (IOException e) {
 						debug("File read/write error: " + e.getMessage());
-						console.setText(console.getText() + "failed: " + e.getMessage() + "\n");
+						gui.updateConsole(String.format("failed: %s\n", e.getMessage()));
 					} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException
 							| InvalidAlgorithmParameterException | NoSuchAlgorithmException
 							| NoSuchPaddingException e) {
 						debug("Cipher error: " + e.getMessage());
-						console.setText(console.getText() + "failed: " + e.getMessage() + "\n");
+						gui.updateConsole(String.format("failed: %s\n", e.getMessage()));
 					} catch (InvalidKeySpecException e) {
 						debug("Hashing error: " + e.getMessage());
-						console.setText(console.getText() + "failed: " + e.getMessage() + "\n");
+						gui.updateConsole(String.format("failed: %s\n", e.getMessage()));
 					}
 				}
 			}
 		}
-		console.setText(console.getText() + "Completed.\n\n");
+		gui.updateConsole(String.format("Completed.\n\n"));
 	}
 
-	public static void decryptAll(String key, JTextPane console) throws IOException {
+	public static void decryptAll(String key, GUI gui) throws IOException {
 		String path = Encryptor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-		console.setText(console.getText() + "Decrypting entire directory: " + path + "\n");
+		gui.updateConsole(String.format("Decrypting entire directory: %s\n", path));
 		
 		File dir = new File(System.getProperty("user.dir"));
 		File[] all = dir.listFiles();
 		for (File file : all) {
 			if (file.isFile()) {
 				if (!file.getName().equals(new File(path).getName())) {
-					console.setText(console.getText() + "Decrypting " + file.getName() + "... ");
+					gui.updateConsole(String.format("Decrypting %s...", file.getName()));
 					try {
 						decrypt(key, file, file);
-						console.setText(console.getText() + "done\n");
+						gui.updateConsole(String.format("done\n"));
 					} catch (IOException e) {
 						debug("File read/write error: " + e.getMessage());
-						console.setText(console.getText() + "failed: " + e.getMessage() + "\n");
+						gui.updateConsole(String.format("failed: %s\n", e.getMessage()));
 					} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException
 							| InvalidAlgorithmParameterException | NoSuchAlgorithmException
 							| NoSuchPaddingException e) {
 						debug("Cipher error: " + e.getMessage());
-						console.setText(console.getText() + "failed: " + e.getMessage() + "\n");
+						gui.updateConsole(String.format("failed: %s\n", e.getMessage()));
 					} catch (InvalidKeySpecException e) {
 						debug("Hashing error: " + e.getMessage());
-						console.setText(console.getText() + "failed: " + e.getMessage() + "\n");
+						gui.updateConsole(String.format("failed: %s\n", e.getMessage()));
 					}
 				}
 			}
 		}
-		console.setText(console.getText() + "Completed.\n\n");
+		gui.updateConsole(String.format("Completed.\n\n"));
 	}
 
 	public static String bytesToHex(byte[] in) {

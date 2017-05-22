@@ -106,7 +106,7 @@ public class GUI extends JPanel {
 	
 	private void encrypt(String key) {
 		try {
-			Encryptor.encryptAll(key, txtpnConsole);
+			Encryptor.encryptAll(key, this);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -115,11 +115,15 @@ public class GUI extends JPanel {
 	
 	private void decrypt(String key) {
 		try {
-			Encryptor.decryptAll(key, txtpnConsole);
+			Encryptor.decryptAll(key, this);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public void updateConsole(String str) {
+		txtpnConsole.setText(txtpnConsole.getText() + str);
 	}
 	
 	public static void main(String[] args) {
