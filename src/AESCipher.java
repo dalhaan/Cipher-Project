@@ -8,6 +8,7 @@ public class AESCipher extends Node {
 	 * 
 	 */
 	private static final long serialVersionUID = -2602551196507096482L;
+	private String key;
 	private IvParameterSpec iv;
 	private byte[] data;
 	private boolean isEncrypted;
