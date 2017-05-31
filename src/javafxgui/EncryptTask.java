@@ -73,11 +73,8 @@ public class EncryptTask extends Task<Void> {
         appendMessage(String.format("Completed.\n\n"));
     }
 
-
-
     private void appendMessage(String str) {
         consoleBuilder.append(str);
         updateMessage(consoleBuilder.toString());
     }
-
 }
