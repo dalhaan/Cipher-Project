@@ -10,6 +10,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -19,6 +20,9 @@ public class Main extends Application {
 	Stage window;
 	PasswordField pfieldPassword, pfieldVerify;
 	TextArea textArea;
+	ProgressBar progressBar;
+	Label progressLabel;
+
 	boolean matching = false;
 	
 	public static void main(String[] args) throws URISyntaxException {
@@ -86,11 +90,22 @@ public class Main extends Application {
 			}
 		});
 
+		// Setup progress bar
+		progressBar = new ProgressBar();
+		progressBar.setPrefWidth(160);
+		layoutControl.addRow(3, progressBar);
+
+		progressLabel = new Label("0/0");
+		progressLabel.setAlignment(Pos.CENTER);
+		layoutControl.addRow(4, progressLabel);
+
 		// Setup control panel
 		RowConstraints rcRadioBtn = new RowConstraints(70);
 		RowConstraints rcPField = new RowConstraints(70);
 		RowConstraints rcButton = new RowConstraints(70);
-		layoutControl.getRowConstraints().addAll(rcRadioBtn, rcPField, rcButton);
+		RowConstraints rcProgressBar = new RowConstraints(40);
+		RowConstraints rcProgressLabel = new RowConstraints(40);
+		layoutControl.getRowConstraints().addAll(rcRadioBtn, rcPField, rcButton, rcProgressBar, rcProgressLabel);
 
 		// Setup console panel
 		ScrollPane scrollPane = new ScrollPane();
@@ -106,10 +121,9 @@ public class Main extends Application {
 		layoutMain.setTop(layoutControl);
 		layoutMain.setBottom(layoutConsole);
 
-		Scene scene = new Scene(layoutMain, 200, 300);
+		Scene scene = new Scene(layoutMain, 200, 400);
 		primaryStage.setScene(scene);
 		primaryStage.show();
-
 	}
 
 	private void checkText() {
@@ -134,19 +148,18 @@ public class Main extends Application {
 	}
 
 	private void encrypt(String key) {
-		try {
-			Encryption.Encryptor.encryptAll(key, textArea);
-		} catch (IOException e) {
-			textArea.appendText(e.getMessage());
-		}
+		Task task = new EncryptTask(key);
+		progressBar.progressProperty().bind(task.progressProperty());
+		progressLabel.textProperty().bind(task.titleProperty());
+		textArea.textProperty().bind(task.messageProperty());
+		new Thread(task).start();
 	}
 
 	private void decrypt(String key) {
-		try {
-			Encryption.Encryptor.decryptAll(key, textArea);
-		} catch (IOException e) {
-			textArea.appendText(e.getMessage());
-		}
+		Task task = new DecryptTask(key);
+		progressBar.progressProperty().bind(task.progressProperty());
+		progressLabel.textProperty().bind(task.titleProperty());
+		textArea.textProperty().bind(task.messageProperty());
+		new Thread(task).start();
 	}
-
 }

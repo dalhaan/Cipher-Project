@@ -13,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+import java.util.Base64;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -26,48 +27,20 @@ public class Encryptor {
 	private static final String TRANSFORMATION = "AES/CBC/PKCS5PADDING";
 	private static final boolean DEBUG = true;
 
-	public static String encrypt(String key, String value) {
-		try {
-			SecureRandom rand = new SecureRandom();
-			IvParameterSpec iv = new IvParameterSpec(rand.generateSeed(16)); // Generate
-																				// //
-																				// byte
-																				// IV
-			byte[] keyStretch = PasswordClass.hash(key, 128);
-			SecretKeySpec skeySpec = new SecretKeySpec(keyStretch, ALGORITHM);
+	public static String encrypt(String key, String value) throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
+			byte[] toBytes = Base64.getDecoder().decode(value);
+			byte[] encrypted = encrypt(key, toBytes);
+			String encoded = Base64.getEncoder().encodeToString(encrypted);
 
-			Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-			cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
-
-			byte[] encryptedBytes = cipher.doFinal(value.getBytes());
-			AESCipher aes = new AESCipher(encryptedBytes, iv);
-
-			return aes.toString();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return null;
+			return encoded;
 	}
 
-	public static String decrypt(String key, String encrypted) {
-		try {
-			byte[] keyStretch = PasswordClass.hash(key, 128);
-			SecretKeySpec skeySpec = new SecretKeySpec(keyStretch, ALGORITHM);
-			AESCipher aes = new AESCipher(encrypted);
+	public static String decrypt(String key, String value) throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
+			byte[] toBytes = Base64.getDecoder().decode(value);
+			byte[] decrypted = decrypt(key, toBytes);
+			String encoded = Base64.getEncoder().encodeToString(decrypted);
 
-			Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-			cipher.init(Cipher.DECRYPT_MODE, skeySpec, aes.getIv());
-
-			byte[] decrypted = cipher.doFinal(aes.getEncryptedData());
-
-			return new String(decrypted);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return null;
+			return encoded;
 	}
 
 	public static byte[] encrypt(String key, byte[] data) throws NoSuchAlgorithmException, NoSuchPaddingException,
@@ -82,10 +55,10 @@ public class Encryptor {
 																			// 16
 																			// byte
 																			// IV
-		debug("Key: "+key);
+		/*debug("Key: "+key);
 		debug("Key hash: "+bytesToHex(keyStretch));
 		debug("plaintext: "+bytesToHex(data));
-		debug("IV: "+bytesToHex(iv.getIV()));
+		debug("IV: "+bytesToHex(iv.getIV()));*/
 		
 		// Init Cipher with key and iv
 		Cipher cipher = Cipher.getInstance(TRANSFORMATION);
@@ -93,9 +66,9 @@ public class Encryptor {
 
 		// Encrypt bytes (doFinal)
 		byte[] outputBytes = cipher.doFinal(data);
-		debug("Encrypted: "+bytesToHex(outputBytes));
+		//debug("Encrypted: "+bytesToHex(outputBytes));
 		outputBytes = prefixHashAndIv(keyStretch, iv, outputBytes);
-		debug("Ouput: "+bytesToHex(outputBytes)+"\n\n");
+		//debug("Ouput: "+bytesToHex(outputBytes)+"\n\n");
 		
 		return outputBytes;
 	}
@@ -106,21 +79,20 @@ public class Encryptor {
 		byte[] keyStretch = PasswordClass.hash(key, 128);
 		SecretKeySpec skeySpec = new SecretKeySpec(keyStretch, ALGORITHM);
 
-		debug("Key: "+key);
-		debug("Key hash: "+bytesToHex(keyStretch));
+		/*debug("Key: "+key);
+		debug("Key hash: "+bytesToHex(keyStretch));*/
 		// Check if hashed key matches the hashed key used
 		byte[] hash = Arrays.copyOfRange(data, 0, 16);
-		debug("Derived key: "+bytesToHex(hash));
+		//debug("Derived key: "+bytesToHex(hash));
 		if (!Arrays.equals(keyStretch, hash)) {
 			throw new InvalidKeyException("Invalid Password");
 		}
-		
 
 		// Extract IV & encrypted data from inputFile
 		IvParameterSpec iv = new IvParameterSpec(Arrays.copyOfRange(data, 16, 32));
 		byte[] encryptedBytes = Arrays.copyOfRange(data, 32, data.length);
-		debug("Derived IV: "+bytesToHex(iv.getIV()));
-		debug("Encrypted: "+bytesToHex(encryptedBytes));
+		/*debug("Derived IV: "+bytesToHex(iv.getIV()));
+		debug("Encrypted: "+bytesToHex(encryptedBytes));*/
 		
 		// Init Cipher with key and iv
 		Cipher cipher = Cipher.getInstance(TRANSFORMATION);
@@ -128,7 +100,7 @@ public class Encryptor {
 
 		// Decrypt extracted encrypted data (doFinal)
 		byte[] outputBytes = cipher.doFinal(encryptedBytes);
-		debug("plaintext: "+bytesToHex(outputBytes));
+		//debug("plaintext: "+bytesToHex(outputBytes));
 		return outputBytes;
 	}
 
