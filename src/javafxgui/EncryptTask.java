@@ -60,6 +60,7 @@ public class EncryptTask extends Task<Void> {
                         appendMessage(String.format("done\n"));
                     } catch (Exception e) {
                         appendMessage(String.format("failed: %s\n", e.getMessage()));
+                        e.printStackTrace();
                     }
                 }
             }
