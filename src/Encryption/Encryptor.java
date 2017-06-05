@@ -30,79 +30,16 @@ public class Encryptor {
 	private static int hashLength = 16;
 	private static int ivLength = 16;
 
-	/*public static String encrypt(String key, String value) throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
-			byte[] toBytes = Base64.getDecoder().decode(value);
-			byte[] encrypted = encrypt(key, true, toBytes);
-			String encoded = Base64.getEncoder().encodeToString(encrypted);
-
-			return encoded;
-	}*/
-
-	public static byte[] encrypt(SecretKeySpec skeySpec, IvParameterSpec iv, byte[] data) throws NoSuchAlgorithmException, NoSuchPaddingException,
-			InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException,
-			InvalidKeySpecException {
-		// Init Cipher with key and iv
-		Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-		cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
-		// Encrypt bytes (doFinal)
-		byte[] outputBytes = cipher.doFinal(data);
-
-		return outputBytes;
-	}
-
-	public static byte[] decrypt(SecretKeySpec skeySpec, IvParameterSpec iv, byte[] data) throws NoSuchAlgorithmException, NoSuchPaddingException,
-			InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException,
-			InvalidKeySpecException {
-		// Init Cipher with key and iv
-		Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-		cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
-		// Encrypt bytes (doFinal)
-		byte[] outputBytes = cipher.doFinal(data);
-
-		return outputBytes;
-	}
-
-	/*public static byte[] decrypt(String key, byte[] data)
-			throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException,
-			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-		byte[] keyStretch = PasswordClass.hash(key, 128);
-		SecretKeySpec skeySpec = new SecretKeySpec(keyStretch, ALGORITHM);
-
-		*//*debug("Key: "+key);
-		debug("Key hash: "+bytesToHex(keyStretch));*//*
-		// Check if hashed key matches the hashed key used
-		byte[] hash = Arrays.copyOfRange(data, 0, 16);
-		//debug("Derived key: "+bytesToHex(hash));
-		if (!Arrays.equals(keyStretch, hash)) {
-			throw new InvalidKeyException("Invalid Password");
-		}
-
-		// Extract IV & encrypted data from inputFile
-		IvParameterSpec iv = new IvParameterSpec(Arrays.copyOfRange(data, 16, 32));
-		byte[] encryptedBytes = Arrays.copyOfRange(data, 32, data.length);
-		*//*debug("Derived IV: "+bytesToHex(iv.getIV()));
-		debug("Encrypted: "+bytesToHex(encryptedBytes));*//*
-
-		// Init Cipher with key and iv
-		Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-		cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
-
-		// Decrypt extracted encrypted data (doFinal)
-		byte[] outputBytes = cipher.doFinal(encryptedBytes);
-		//debug("plaintext: "+bytesToHex(outputBytes));
-		return outputBytes;
-	}*/
-
 	public static void encrypt(String key, File inputFile, File outputFile) throws IOException, InvalidKeyException,
 			NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
-		// new code:
 		FileInputStream inputStream = new FileInputStream(inputFile);
 		FileOutputStream outputStream = new FileOutputStream(outputFile, true);
 
 		// Create keySpec and Iv
 		byte[] keyStretch = PasswordClass.hash(key, 128);
-		SecretKeySpec skeySpec = new SecretKeySpec(keyStretch, ALGORITHM);
+		byte[] hash = PasswordClass.hash(Base64.getEncoder().encodeToString(keyStretch), 128);
+		SecretKeySpec skeySpec = new SecretKeySpec(hash, ALGORITHM);
 		SecureRandom rand = new SecureRandom();
 		IvParameterSpec iv = new IvParameterSpec(rand.generateSeed(16)); // Generate 16byte IV
 
@@ -113,18 +50,17 @@ public class Encryptor {
 		byte[] block = new byte[blockSize];
 		int bytesRead;
 		int i=0;
-		System.out.println("Entering loop");
 		while ((bytesRead = inputStream.read(block, 0, blockSize)) != -1) {
-			System.out.println("Loop "+i);
 			// Encrypt the block
 			byte[] output = cipher.update(block, 0, bytesRead);
 			if (output != null && i==0) {
-				output = prefixHashAndIv(keyStretch, iv, output);
+				output = prefixHashAndIv(hash, iv, output);
 			}
 			// Write the now encrypted block into the first block of the output file
 			if (output != null) outputStream.write(output);
 			i++;
 		}
+		outputStream.write(cipher.doFinal());
 		inputStream.close();
 		outputStream.close();
 	}
@@ -132,131 +68,45 @@ public class Encryptor {
 	public static void decrypt(String key, File inputFile, File outputFile)
 			throws IOException, InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-		// TODO: Update this
-		// new code:
 		FileInputStream inputStream = new FileInputStream(inputFile);
 
-		// Create keySpec and Iv
+		// Verify password with the hashed password of the file
 		byte[] keyStretch = PasswordClass.hash(key, 128);
-		SecretKeySpec skeySpec = new SecretKeySpec(keyStretch, ALGORITHM);
-		IvParameterSpec iv = null;
-
-		// Verify password
-		byte[] hash = new byte[hashLength];
-		inputStream.read(hash, 0, hashLength);
-		if (Arrays.equals(hash, keyStretch)) {
-			FileOutputStream outputStream = new FileOutputStream(outputFile);
-
-			byte[] ivBytes = new byte[ivLength];
-			inputStream.read(ivBytes, 0, ivLength);
-			iv = new IvParameterSpec(ivBytes);
-
-			// Init Cipher with key and iv
-			Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-			cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
-
-			byte[] block = new byte[blockSize];
-			int bytesRead;
-			while((bytesRead = inputStream.read(block, 0, blockSize)) != -1) {
-				byte[] output = cipher.update(block, 0, bytesRead);
-				// Write the now decrypted block into the first block of the output file
-				if (output != null) outputStream.write(output);
-			}
-			outputStream.close();
-		} else {
+		byte[] hash = PasswordClass.hash(Base64.getEncoder().encodeToString(keyStretch), 128);
+		byte[] fileHash = new byte[hashLength];
+		inputStream.read(fileHash, 0, hashLength);
+		if (!Arrays.equals(hash, fileHash)) {
+			// If passwords don't match throw exception and close the input file
 			inputStream.close();
 			throw new InvalidKeyException(("Wrong password"));
 		}
 
-		inputStream.close();
-
-		// Old code:
-		/*byte[] data = new byte[(int) inputFile.length()];
-
-		FileInputStream inputStream = new FileInputStream(inputFile);
-		inputStream.read(data);
-		inputStream.close();
-
-		byte[] decryptedData = decrypt(	key, data);
-
+		// Otherwise, open stream to the output file
 		FileOutputStream outputStream = new FileOutputStream(outputFile);
-		outputStream.write(decryptedData);
-		outputStream.close();*/
-	}
 
-	/*
-	 * public static void encrypt(String key, File inputFile, File outputFile) {
-	 * // ENCRYPT
-	 *
-	 * // Init Cipher with key and rand IV // Read inputFile into bytes //
-	 * Encrypt bytes (doFinal) // Prefix IV to encrypted bytes // Write prefixed
-	 * to outputFile // close streams try { byte[] keyStretch =
-	 * Encryption.PasswordClass.hash(key, 128); SecretKeySpec skeySpec = new
-	 * SecretKeySpec(keyStretch, ALGORITHM);
-	 *
-	 * // Read inputFile into bytes FileInputStream inputStream; inputStream =
-	 * new FileInputStream(inputFile);
-	 *
-	 * byte[] inputBytes = new byte[(int) inputFile.length()];
-	 * inputStream.read(inputBytes);
-	 *
-	 * SecureRandom rand = new SecureRandom(); IvParameterSpec iv = new
-	 * IvParameterSpec(rand.generateSeed(16)); // Generate // 16 // byte IV
-	 *
-	 * // Init Cipher with key and iv Cipher cipher =
-	 * Cipher.getInstance(TRANSFORMATION); cipher.init(Cipher.ENCRYPT_MODE,
-	 * skeySpec, iv);
-	 *
-	 * // Encrypt bytes (doFinal) byte[] outputBytes =
-	 * cipher.doFinal(inputBytes);
-	 *
-	 * FileOutputStream outputStream = new FileOutputStream(outputFile);
-	 * outputStream.write(prefixHashAndIv(keyStretch, iv, outputBytes));
-	 *
-	 * inputStream.close(); outputStream.close(); } catch (IOException e) {
-	 * debug("File read/write error: " + e.getMessage()); } catch
-	 * (IllegalBlockSizeException | BadPaddingException | InvalidKeyException |
-	 * InvalidAlgorithmParameterException | NoSuchAlgorithmException |
-	 * NoSuchPaddingException e) { debug("Cipher error: " + e.getMessage()); }
-	 * catch (Exception e) { debug("Hashing error: " + e.getMessage()); } }
-	 *
-	 * public static void decrypt(String key, File inputFile, File outputFile) {
-	 * // DECRYPT
-	 *
-	 * // Extract IV & encrypted data from inputFile // init Cipher with key and
-	 * iv // Decrypt extracted encrypted data (doFinal)
-	 *
-	 * // Read inputFile into bytes try { byte[] keyStretch =
-	 * Encryption.PasswordClass.hash(key, 128); SecretKeySpec skeySpec = new
-	 * SecretKeySpec(keyStretch, ALGORITHM);
-	 * 
-	 * FileInputStream inputStream = new FileInputStream(inputFile); byte[]
-	 * inputBytes = new byte[(int) inputFile.length()];
-	 * inputStream.read(inputBytes);
-	 * 
-	 * // Check if hashed key matches the hashed key used byte[] hash =
-	 * Arrays.copyOfRange(inputBytes, 0, 16); if (!hash.equals(keyStretch)) {
-	 * debug("Incorrect Password."); inputStream.close(); return; }
-	 * 
-	 * // Extract IV & encrypted data from inputFile IvParameterSpec iv = new
-	 * IvParameterSpec(Arrays.copyOfRange(inputBytes, 16, 32)); byte[]
-	 * encryptedBytes = Arrays.copyOfRange(inputBytes, 32, inputBytes.length);
-	 * 
-	 * // Init Cipher with key and iv Cipher cipher =
-	 * Cipher.getInstance(TRANSFORMATION); cipher.init(Cipher.DECRYPT_MODE,
-	 * skeySpec, iv);
-	 * 
-	 * // Decrypt extracted encrypted data (doFinal) byte[] outputBytes =
-	 * cipher.doFinal(encryptedBytes);
-	 * 
-	 * FileOutputStream outputStream = new FileOutputStream(outputFile);
-	 * outputStream.write(outputBytes);
-	 * 
-	 * inputStream.close(); outputStream.close();
-	 * 
-	 * } catch (IOException e) { debug("File read error: " + e.getMessage()); }
-	 * catch (Exception e) { debug("Hashing error: " + e.getMessage()); } }
-	 */
+		// Load the initialisation vector from the input file
+		byte[] ivBytes = new byte[ivLength];
+		inputStream.read(ivBytes, 0, ivLength);
+		IvParameterSpec iv = new IvParameterSpec(ivBytes);
+		SecretKeySpec skeySpec = new SecretKeySpec(hash, ALGORITHM);
+
+		// Init Cipher with key and iv
+		Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+		cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+
+		// Write decrypted file to the output file block by block
+		byte[] block = new byte[blockSize];
+		int bytesRead;
+		while((bytesRead = inputStream.read(block, 0, blockSize)) != -1) {
+			byte[] output = cipher.update(block, 0, bytesRead);
+			// Write the now decrypted block into the first block of the output file
+			if (output != null) outputStream.write(output);
+		}
+		outputStream.write(cipher.doFinal());
+		// Finished decrypting file so close all streams
+		outputStream.close();
+		inputStream.close();
+	}
 
 	public static void encryptAll(String key, TextArea textArea) throws IOException {
 		String path = Encryptor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
