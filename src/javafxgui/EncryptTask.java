@@ -27,6 +27,7 @@ public class EncryptTask extends Task<Void> {
     public EncryptTask(String key) {
         this.key = key;
     }
+
     @Override
     protected Void call() throws Exception {
         if (key == null) {
@@ -37,43 +38,70 @@ public class EncryptTask extends Task<Void> {
         return null;
     }
 
+    /** Encrypt every file in the current directory.
+     * Calling this method encrypts every files in the current directory and gives them the extension .enc
+     * @param key
+     * @throws IOException
+     */
     public void encryptAll(String key) throws IOException {
-        updateMessage("Start encryptAll("+key+")");
-        updateProgress(0, 100);
-        updateMessage("UpdateProgress(0, 100)");
-        String path = Encryptor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        updateMessage("Get class path: "+path);
-        appendMessage(String.format("Encrypting entire directory: %s\n", path));
-
+        // Load all of the files in the current directory
         File dir = new File(System.getProperty("user.dir"));
         File[] all = dir.listFiles();
+        // Encrypt the files
+        encryptFiles(key, all);
+        // Alert the user of completion
+        appendMessage(String.format("Completed.\n\n"));
+    }
+
+    /**
+     * Encrypt a group of files.
+     * Calling this method encrypts the given files into new files with a .enc extension and deletes the original files once they have all been encrypted.
+     * @param key
+     * @param files
+     */
+    private void encryptFiles(String key, File[] files) {
+        // Initialise method
+        String path = Encryptor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         List<File> oldFiles = new ArrayList<File>();
+        updateProgress(0, 100);
+
+        // Encrypt each given file
         int i=1;
-        for (File file : all) {
+        for (File file : files) {
+            // Check that the file is a file, not a subdirectory. Don't encrypt subdirectories.
             if (file.isFile()) {
+                // Don't encrypt this application's file
                 if (!file.getName().equals(new File(path).getName())) {
                     appendMessage(String.format("Encrypting %s...", file.getName()));
                     try {
+                        // Encrypt the file
                         File output = new File(file.getName()+".enc");
                         Encryptor.encrypt(key, file, output);
+                        // Keep track of original files to delete later
                         oldFiles.add(file);
                         appendMessage(String.format("done\n"));
                     } catch (Exception e) {
+                        // Encryption of the file failed
                         appendMessage(String.format("failed: %s\n", e.getMessage()));
                         e.printStackTrace();
                     }
                 }
             }
-            updateTitle(i + "/" + all.length);
-            updateProgress(((double)(i)/(double)all.length)*100, 100);
+            // Update progress indicators
+            updateTitle(i + "/" + files.length);
+            updateProgress(i, files.length);
             i++;
         }
+        // Delete the original files so the user doesn't have to manually
         for (File file : oldFiles) {
             file.delete();
         }
-        appendMessage(String.format("Completed.\n\n"));
     }
 
+    /**
+     * Append a string to the console output
+     * @param str
+     */
     private void appendMessage(String str) {
         consoleBuilder.append(str);
         updateMessage(consoleBuilder.toString());
