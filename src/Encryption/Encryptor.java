@@ -30,6 +30,21 @@ public class Encryptor {
 	private static int hashLength = 16;
 	private static int ivLength = 16;
 
+    /**
+     * Encrypt a file.
+     * This method encrypts an input file with a string and saves the file into the output file
+     * @param key
+     * @param inputFile
+     * @param outputFile
+     * @throws IOException
+     * @throws InvalidKeyException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     * @throws InvalidKeySpecException
+     */
 	public static void encrypt(String key, File inputFile, File outputFile) throws IOException, InvalidKeyException,
 			NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException,
 			IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
@@ -67,11 +82,25 @@ public class Encryptor {
 		outputStream.close();
 	}
 
+    /**
+     * Decrypts a file.
+     * This method decrypts the input file with a string and saves it into the output file.
+     * @param key
+     * @param inputFile
+     * @param outputFile
+     * @throws IOException
+     * @throws InvalidKeyException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     * @throws NoSuchPaddingException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
 	public static void decrypt(String key, File inputFile, File outputFile)
 			throws IOException, InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException,
 			NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
 		FileInputStream inputStream = new FileInputStream(inputFile);
-
 		// Verify password with the hashed password of the file
 		byte[] keyStretch = PasswordClass.hash(key, 128);
 		byte[] hash = PasswordClass.hash(Base64.getEncoder().encodeToString(keyStretch), 128);
@@ -110,68 +139,11 @@ public class Encryptor {
 		inputStream.close();
 	}
 
-	public static void encryptAll(String key, TextArea textArea) throws IOException {
-		String path = Encryptor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-		textArea.appendText(String.format("Encrypting entire directory: %s\n", path));
-
-		File dir = new File(System.getProperty("user.dir"));
-		File[] all = dir.listFiles();
-		for (File file : all) {
-			if (file.isFile()) {
-				if (!file.getName().equals(new File(path).getName())) {
-					textArea.appendText(String.format("Encrypting %s...", file.getName()));
-					try {
-						encrypt(key, file, file);
-						textArea.appendText(String.format("done\n"));
-					} catch (IOException e) {
-						debug("File read/write error: " + e.getMessage());
-						textArea.appendText(String.format("failed: %s\n", e.getMessage()));
-					} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException
-							| InvalidAlgorithmParameterException | NoSuchAlgorithmException
-							| NoSuchPaddingException e) {
-						debug("Cipher error: " + e.getMessage());
-						textArea.appendText(String.format("failed: %s\n", e.getMessage()));
-					} catch (InvalidKeySpecException e) {
-						debug("Hashing error: " + e.getMessage());
-						textArea.appendText(String.format("failed: %s\n", e.getMessage()));
-					}
-				}
-			}
-		}
-		textArea.appendText(String.format("Completed.\n\n"));
-	}
-
-	public static void decryptAll(String key, TextArea textArea) throws IOException {
-		String path = Encryptor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-		textArea.appendText(String.format("Decrypting entire directory: %s\n", path));
-		
-		File dir = new File(System.getProperty("user.dir"));
-		File[] all = dir.listFiles();
-		for (File file : all) {
-			if (file.isFile()) {
-				if (!file.getName().equals(new File(path).getName())) {
-					textArea.appendText(String.format("Decrypting %s...", file.getName()));
-					try {
-						decrypt(key, file, file);
-						textArea.appendText(String.format("done\n"));
-					} catch (IOException e) {
-						debug("File read/write error: " + e.getMessage());
-						textArea.appendText(String.format("failed: %s\n", e.getMessage()));
-					} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException
-							| InvalidAlgorithmParameterException | NoSuchAlgorithmException
-							| NoSuchPaddingException e) {
-						debug("Cipher error: " + e.getMessage());
-						textArea.appendText(String.format("failed: %s\n", e.getMessage()));
-					} catch (InvalidKeySpecException e) {
-						debug("Hashing error: " + e.getMessage());
-						textArea.appendText(String.format("failed: %s\n", e.getMessage()));
-					}
-				}
-			}
-		}
-		textArea.appendText(String.format("Completed.\n\n"));
-	}
-
+    /**
+     * Convert bytes to a hex string.
+     * @param in
+     * @return
+     */
 	public static String bytesToHex(byte[] in) {
 		final StringBuilder builder = new StringBuilder();
 		for (byte b : in) {
@@ -180,6 +152,13 @@ public class Encryptor {
 		return builder.toString();
 	}
 
+    /**
+     * Prefixes the input hash and IV to the encryptedBytes array.
+     * @param hash
+     * @param iv
+     * @param encryptedBytes
+     * @return
+     */
 	private static byte[] prefixHashAndIv(byte[] hash, IvParameterSpec iv, byte[] encryptedBytes) {
 		int length;
 
@@ -200,7 +179,6 @@ public class Encryptor {
 				output[i] = encryptedBytes[i - hashLength - ivLength];
 			}
 		}
-
 		return output;
 	}
 
@@ -208,9 +186,5 @@ public class Encryptor {
 		if (DEBUG) {
 			System.out.println(str);
 		}
-	}
-
-	public static void main(String[] args) {
-
 	}
 }
