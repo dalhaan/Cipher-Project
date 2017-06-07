@@ -64,7 +64,6 @@ public class EncryptTask extends Task<Void> {
         String path = Encryptor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         List<File> oldFiles = new ArrayList<File>();
         updateProgress(0, 100);
-
         // Encrypt each given file
         int i=1;
         for (File file : files) {

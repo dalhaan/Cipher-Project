@@ -53,11 +53,13 @@ public class Encryptor {
 		while ((bytesRead = inputStream.read(block, 0, blockSize)) != -1) {
 			// Encrypt the block
 			byte[] output = cipher.update(block, 0, bytesRead);
-			if (output != null && i==0) {
-				output = prefixHashAndIv(hash, iv, output);
+			if (output != null) {
+				if (i==0) {
+					output = prefixHashAndIv(hash, iv, output);
+				}
+				// Write the now encrypted block into the first block of the output file
+				outputStream.write(output);
 			}
-			// Write the now encrypted block into the first block of the output file
-			if (output != null) outputStream.write(output);
 			i++;
 		}
 		outputStream.write(cipher.doFinal());

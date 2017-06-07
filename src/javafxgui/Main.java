@@ -1,29 +1,22 @@
 package javafxgui;
 
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
 
 public class Main extends Application {
-	Stage window;
-	PasswordField pfieldPassword, pfieldVerify;
-	TextArea textArea;
-	ProgressBar progressBar;
-	Label progressLabel;
+	private PasswordField pfieldPassword, pfieldVerify;
+	private TextArea textArea;
+	private ProgressBar progressBar;
+	private Label progressLabel;
 
-	boolean matching = false;
+	private boolean matching = false;
 	
 	public static void main(String[] args) throws URISyntaxException {
 		launch(args);
@@ -58,14 +51,10 @@ public class Main extends Application {
 		// Setup password fields
 		VBox layoutPasswords = new VBox(10);
 		pfieldPassword = new PasswordField();
-		pfieldPassword.textProperty().addListener((value, oldValue, newValue) -> {
-			checkText();
-		});
+		pfieldPassword.textProperty().addListener((value, oldValue, newValue) -> validatePasswords());
 		//pfieldPassword.setStyle("-fx-control-inner-background: #FF4500");
 		pfieldVerify = new PasswordField();
-		pfieldVerify.textProperty().addListener((value, oldValue, newValue) -> {
-			checkText();
-		});
+		pfieldVerify.textProperty().addListener((value, oldValue, newValue) -> validatePasswords());
 		pfieldPassword.setPromptText("Enter password...");
 		pfieldVerify.setPromptText("Verify password...");
 		layoutPasswords.getChildren().addAll(pfieldPassword, pfieldVerify);
@@ -126,20 +115,28 @@ public class Main extends Application {
 		primaryStage.show();
 	}
 
-	private void checkText() {
+	/**
+	 * Validates the passwords entered in the password fields.
+	 * If the passwords don't match the fields turn red, if they do they turn green.
+	 */
+	private void validatePasswords() {
+		// Initialise method
 		String password, verify;
 		matching = false;
-
 		password = pfieldPassword.getText();
 		verify = pfieldVerify.getText();
+		// Set appropriate colours
 		if (verify.isEmpty()) {
+			// If entering the first password, set both boxes white
 			pfieldPassword.setStyle("-fx-control-inner-background: #FFFFFF");
 			pfieldVerify.setStyle("-fx-control-inner-background: #FFFFFF");
 		} else {
 			if (!verify.equals(password)) {
+				// If the verified password doesn't match the original, set both boxes red
 				pfieldPassword.setStyle("-fx-control-inner-background: #FF5252");
 				pfieldVerify.setStyle("-fx-control-inner-background: #FF5252");
 			} else {
+				// If they do match, set both boxes green
 				pfieldPassword.setStyle("-fx-control-inner-background: #52ff52");
 				pfieldVerify.setStyle("-fx-control-inner-background: #52ff52");
 				matching = true;
