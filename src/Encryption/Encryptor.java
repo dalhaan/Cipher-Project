@@ -32,7 +32,7 @@ public class Encryptor {
 
     /**
      * Encrypt a file.
-     * This method encrypts an input file with a string and saves the file into the output file
+     * This method encrypts an input file block-wise with a string and saves the file into the output file
      * @param key
      * @param inputFile
      * @param outputFile
@@ -84,7 +84,7 @@ public class Encryptor {
 
     /**
      * Decrypts a file.
-     * This method decrypts the input file with a string and saves it into the output file.
+     * This method decrypts the input file block-wise with a string and saves it into the output file.
      * @param key
      * @param inputFile
      * @param outputFile
