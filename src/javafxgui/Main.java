@@ -2,19 +2,26 @@ package javafxgui;
 
 import javafx.application.Application;
 import javafx.concurrent.Task;
+import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.net.URISyntaxException;
+import java.util.List;
 
 public class Main extends Application {
 	private PasswordField pfieldPassword, pfieldVerify;
 	private TextArea textArea;
 	private ProgressBar progressBar;
 	private Label progressLabel;
+
+	private File[] selectedFiles;
+	private Label labelCount;
 
 	private boolean matching = false;
 	
@@ -33,6 +40,24 @@ public class Main extends Application {
 		layoutControl.setAlignment(Pos.CENTER);
 		layoutControl.setGridLinesVisible(false);
 
+		// Setup file selection button & label
+		GridPane layoutFileSelection = new GridPane();
+		layoutFileSelection.setAlignment(Pos.CENTER);
+		layoutFileSelection.setGridLinesVisible(false);
+
+		//// File selection button
+		Button btnFileSelect = new Button("Select File(s)");
+		btnFileSelect.setPrefSize(160, 40);
+		btnFileSelect.setAlignment(Pos.CENTER);
+		layoutFileSelection.addRow(0, btnFileSelect);
+		layoutControl.addRow(0, layoutFileSelection);
+
+		//// Selection count label
+		labelCount = new Label("0 files selected");
+		layoutFileSelection.addRow(1, labelCount);
+		layoutFileSelection.setHalignment(labelCount, HPos.CENTER);
+
+
 		// Setup radio buttons
 		ToggleGroup group = new ToggleGroup();
 		VBox layoutRadioBtns = new VBox(10);
@@ -44,7 +69,7 @@ public class Main extends Application {
 		rbtnDecrypt.setToggleGroup(group);
 
 		layoutRadioBtns.getChildren().addAll(rbtnEncrypt, rbtnDecrypt);
-		layoutControl.addRow(0, layoutRadioBtns);
+		layoutControl.addRow(1, layoutRadioBtns);
 		layoutRadioBtns.setAlignment(Pos.CENTER);
 
 
@@ -58,13 +83,13 @@ public class Main extends Application {
 		pfieldPassword.setPromptText("Enter password...");
 		pfieldVerify.setPromptText("Verify password...");
 		layoutPasswords.getChildren().addAll(pfieldPassword, pfieldVerify);
-		layoutControl.addRow(1, layoutPasswords);
+		layoutControl.addRow(2, layoutPasswords);
 		layoutPasswords.setAlignment(Pos.CENTER);
 
 		// Setup button
 		Button button = new Button("OK");
 		button.setPrefSize(160, 40);
-		layoutControl.addRow(2, button);
+		layoutControl.addRow(3, button);
 		button.setAlignment(Pos.CENTER);
 		button.setOnAction(e -> {
 			textArea.appendText("Clicked.\n");
@@ -82,11 +107,11 @@ public class Main extends Application {
 		// Setup progress bar
 		progressBar = new ProgressBar();
 		progressBar.setPrefWidth(160);
-		layoutControl.addRow(3, progressBar);
+		layoutControl.addRow(4, progressBar);
 
 		progressLabel = new Label("0/0");
-		progressLabel.setAlignment(Pos.CENTER);
-		layoutControl.addRow(4, progressLabel);
+		layoutControl.setHalignment(progressLabel, HPos.CENTER);
+		layoutControl.addRow(5, progressLabel);
 
 		// Setup control panel
 		RowConstraints rcRadioBtn = new RowConstraints(70);
@@ -158,5 +183,19 @@ public class Main extends Application {
 		progressLabel.textProperty().bind(task.titleProperty());
 		textArea.textProperty().bind(task.messageProperty());
 		new Thread(task).start();
+	}
+
+	/**
+	 * Updates selected file count label
+	 */
+	private void updateCount() {
+		int count = this.selectedFiles.length;
+		String value;
+		if (count == 1) {
+			value = count + " file selected";
+		} else {
+			value = count + " files selected";
+		}
+		labelCount.setText(value);
 	}
 }
