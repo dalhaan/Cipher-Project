@@ -2,17 +2,8 @@ package javafxgui;
 
 import Encryption.Encryptor;
 import javafx.concurrent.Task;
-import javafx.scene.control.TextArea;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.File;
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,11 +12,17 @@ import java.util.List;
  */
 public class EncryptTask extends Task<Void> {
     private String key;
+    private File[] files;
 
     private StringBuilder consoleBuilder = new StringBuilder();;
 
     public EncryptTask(String key) {
         this.key = key;
+    }
+
+    public EncryptTask(String key, File[] files) {
+        this(key);
+        this.files = files;
     }
 
     @Override
@@ -34,7 +31,11 @@ public class EncryptTask extends Task<Void> {
             return null;
         }
         updateMessage("Starting to encrypt");
-        encryptAll(key);
+        if (files != null) {
+            encryptFiles(this.key, this.files);
+        } else {
+            encryptAll(key);
+        }
         return null;
     }
 

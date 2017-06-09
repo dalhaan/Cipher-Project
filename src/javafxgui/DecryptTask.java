@@ -20,34 +20,45 @@ import java.util.List;
  */
 public class DecryptTask extends Task<Void> {
     private String key;
+    private File[] files;
     private StringBuilder consoleBuilder = new StringBuilder();
 
     public DecryptTask(String key) {
         this.key = key;
     }
+
+    public DecryptTask(String key, File[] files) {
+        this(key);
+        this.files = files;
+    }
+
     @Override
     protected Void call() throws Exception {
         if (key == null) {
             return null;
         }
-        updateMessage("Starting to decrypt");
-        decryptAll(key);
+        updateMessage("Starting to encrypt");
+        if (files != null) {
+            decryptFiles(this.key, this.files);
+        } else {
+            decryptAll(key);
+        }
         return null;
     }
 
     public void decryptAll(String key) throws IOException {
-        updateMessage("Start dncryptAll("+key+")");
-        updateProgress(0, 100);
-        updateMessage("UpdateProgress(0, 100)");
-        String path = Encryptor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        updateMessage("Get class path: "+path);
-        appendMessage(String.format("Decrypting entire directory: %s\n", path));
-
         File dir = new File(System.getProperty("user.dir"));
         File[] all = dir.listFiles();
+        decryptFiles(key, all);
+        appendMessage(String.format("Completed.\n\n"));
+    }
+
+    public void decryptFiles(String key, File[] files) {
+        String path = Encryptor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         List<File> oldFiles = new ArrayList<File>();
+        updateProgress(0, 100);
         int i=1;
-        for (File file : all) {
+        for (File file : files) {
             if (file.isFile()) {
                 if (!file.getName().equals(new File(path).getName())) {
                     appendMessage(String.format("Decrypting %s...", file.getName()));
@@ -56,29 +67,19 @@ public class DecryptTask extends Task<Void> {
                         Encryptor.decrypt(key, file, output);
                         oldFiles.add(file);
                         appendMessage(String.format("done\n"));
-                    } catch (IOException e) {
-                        appendMessage(String.format("failed: %s\n", e.getMessage()));
-                    } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException
-                            | InvalidAlgorithmParameterException | NoSuchAlgorithmException
-                            | NoSuchPaddingException e) {
-                        appendMessage(String.format("failed: %s\n", e.getMessage()));
-                    } catch (InvalidKeySpecException e) {
+                    } catch (Exception e) {
                         appendMessage(String.format("failed: %s\n", e.getMessage()));
                     }
                 }
             }
-            updateTitle(i + "/" + all.length);
-            updateProgress(((double)i/(double)all.length)*100, 100);
+            updateTitle(i + "/" + files.length);
+            updateProgress(((double)i/(double)files.length)*100, 100);
             i++;
         }
         for (File file : oldFiles) {
             file.delete();
         }
-        appendMessage(String.format("Completed.\n\n"));
     }
-
-
-
     private void appendMessage(String str) {
         consoleBuilder.append(str);
         updateMessage(consoleBuilder.toString());
