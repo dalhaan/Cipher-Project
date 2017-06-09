@@ -20,7 +20,7 @@ public class Main extends Application {
 	private ProgressBar progressBar;
 	private Label progressLabel;
 
-	private File[] selectedFiles;
+	private File[] selectedFiles = new File[0];
 	private Label labelCount;
 
 	private boolean matching = false;
@@ -49,6 +49,14 @@ public class Main extends Application {
 		Button btnFileSelect = new Button("Select File(s)");
 		btnFileSelect.setPrefSize(160, 40);
 		btnFileSelect.setAlignment(Pos.CENTER);
+		btnFileSelect.setOnAction(e -> {
+			String path = System.getProperty("user.dir");
+			File directory = new File(path);
+			FileChooser fileChooser = new FileChooser();
+			fileChooser.setInitialDirectory(directory);
+
+			selectFiles(fileChooser.showOpenMultipleDialog(primaryStage));
+		});
 		layoutFileSelection.addRow(0, btnFileSelect);
 		layoutControl.addRow(0, layoutFileSelection);
 
@@ -107,8 +115,16 @@ public class Main extends Application {
 		// Setup progress bar
 		progressBar = new ProgressBar();
 		progressBar.setPrefWidth(160);
+		progressBar.progressProperty().addListener((observable, oldValue, newValue) -> {
+			// Set progress bar blue when processing and green when completed
+			if (newValue.doubleValue() == 1.0) {
+				progressBar.setStyle("-fx-accent: lime");
+			} else {
+				progressBar.setStyle("-fx-accent: royalblue");
+			}
+		});
 		layoutControl.addRow(4, progressBar);
-
+		// Setup progress label
 		progressLabel = new Label("0/0");
 		layoutControl.setHalignment(progressLabel, HPos.CENTER);
 		layoutControl.addRow(5, progressLabel);
@@ -127,6 +143,7 @@ public class Main extends Application {
 		textArea = new TextArea();
 		textArea.prefWidthProperty().bind(primaryStage.widthProperty());
 		textArea.setEditable(false);
+		textArea.setStyle("-fx-font-size: 0.8em;");
 
 		BorderPane layoutConsole = new BorderPane();
 		scrollPane.setContent(textArea);
@@ -170,32 +187,42 @@ public class Main extends Application {
 	}
 
 	private void encrypt(String key) {
-		Task task = new EncryptTask(key);
+		Task task = new EncryptTask(key, this.selectedFiles);
 		progressBar.progressProperty().bind(task.progressProperty());
 		progressLabel.textProperty().bind(task.titleProperty());
 		textArea.textProperty().bind(task.messageProperty());
 		new Thread(task).start();
+		// Clear selected files once schedule is done
+		selectFiles(null);
 	}
 
 	private void decrypt(String key) {
-		Task task = new DecryptTask(key);
+		Task task = new DecryptTask(key, this.selectedFiles);
 		progressBar.progressProperty().bind(task.progressProperty());
 		progressLabel.textProperty().bind(task.titleProperty());
 		textArea.textProperty().bind(task.messageProperty());
 		new Thread(task).start();
+		// Clear selected files once schedule is done
+		selectFiles(null);
 	}
 
 	/**
-	 * Updates selected file count label
+	 * Adds files as the selected files and updates the file count
+	 * @param files
 	 */
-	private void updateCount() {
-		int count = this.selectedFiles.length;
+	private void selectFiles(List<File> files) {
 		String value;
-		if (count == 1) {
-			value = count + " file selected";
+		if (files == null) {
+			this.selectedFiles = new File[0];
+			value = "0 selected files";
 		} else {
-			value = count + " files selected";
+			if (files.size() == 1) {
+				value = "1 selected file";
+			} else {
+				value = files.size() + " selected files";
+			}
+			this.selectedFiles = files.toArray(new File[0]);
 		}
-		labelCount.setText(value);
+		this.labelCount.setText(value);
 	}
 }
