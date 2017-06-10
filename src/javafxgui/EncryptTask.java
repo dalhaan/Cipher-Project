@@ -75,7 +75,7 @@ public class EncryptTask extends Task<Void> {
                     appendMessage(String.format("Encrypting %s...", file.getName()));
                     try {
                         // Encrypt the file
-                        File output = new File(file.getName()+".enc");
+                        File output = new File(file.getCanonicalPath()+".enc");
                         Encryptor.encrypt(key, file, output);
                         // Keep track of original files to delete later
                         oldFiles.add(file);

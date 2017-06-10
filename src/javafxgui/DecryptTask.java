@@ -63,7 +63,7 @@ public class DecryptTask extends Task<Void> {
                 if (!file.getName().equals(new File(path).getName())) {
                     appendMessage(String.format("Decrypting %s...", file.getName()));
                     try {
-                        File output = new File(file.getName().substring(0, file.getName().lastIndexOf('.')));
+                        File output = new File(file.getCanonicalPath().substring(0, file.getCanonicalPath().lastIndexOf('.')));
                         Encryptor.decrypt(key, file, output);
                         oldFiles.add(file);
                         appendMessage(String.format("done\n"));
