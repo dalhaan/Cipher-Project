@@ -41,14 +41,9 @@ public class Main extends Application {
 		layoutControl.setGridLinesVisible(false);
 
 		// Setup file selection button & label
-		GridPane layoutFileSelection = new GridPane();
-		layoutFileSelection.setAlignment(Pos.CENTER);
-		layoutFileSelection.setGridLinesVisible(false);
-
 		//// File selection button
 		Button btnFileSelect = new Button("Select File(s)");
 		btnFileSelect.setPrefSize(160, 40);
-		btnFileSelect.setAlignment(Pos.CENTER);
 		btnFileSelect.setOnAction(e -> {
 			String path = System.getProperty("user.dir");
 			File directory = new File(path);
@@ -57,18 +52,18 @@ public class Main extends Application {
 
 			selectFiles(fileChooser.showOpenMultipleDialog(primaryStage));
 		});
-		layoutFileSelection.addRow(0, btnFileSelect);
-		layoutControl.addRow(0, layoutFileSelection);
+		layoutControl.setHalignment(btnFileSelect, HPos.CENTER);
+		layoutControl.addRow(0, btnFileSelect);
 
 		//// Selection count label
 		labelCount = new Label("0 files selected");
-		layoutFileSelection.addRow(1, labelCount);
-		layoutFileSelection.setHalignment(labelCount, HPos.CENTER);
-
+		layoutControl.setHalignment(labelCount, HPos.CENTER);
+		layoutControl.addRow(1, labelCount);
 
 		// Setup radio buttons
 		ToggleGroup group = new ToggleGroup();
 		VBox layoutRadioBtns = new VBox(10);
+		layoutRadioBtns.setAlignment(Pos.CENTER);
 		RadioButton rbtnEncrypt = new RadioButton("Encrypt");
 		rbtnEncrypt.setSelected(true);
 		rbtnEncrypt.setToggleGroup(group);
@@ -77,28 +72,27 @@ public class Main extends Application {
 		rbtnDecrypt.setToggleGroup(group);
 
 		layoutRadioBtns.getChildren().addAll(rbtnEncrypt, rbtnDecrypt);
-		layoutControl.addRow(1, layoutRadioBtns);
-		layoutRadioBtns.setAlignment(Pos.CENTER);
-
+		layoutControl.setHalignment(btnFileSelect, HPos.CENTER);
+		layoutControl.addRow(2, layoutRadioBtns);
 
 		// Setup password fields
 		VBox layoutPasswords = new VBox(10);
+		layoutPasswords.setAlignment(Pos.CENTER);
 		pfieldPassword = new PasswordField();
 		pfieldPassword.textProperty().addListener((value, oldValue, newValue) -> validatePasswords());
-		//pfieldPassword.setStyle("-fx-control-inner-background: #FF4500");
 		pfieldVerify = new PasswordField();
 		pfieldVerify.textProperty().addListener((value, oldValue, newValue) -> validatePasswords());
 		pfieldPassword.setPromptText("Enter password...");
 		pfieldVerify.setPromptText("Verify password...");
 		layoutPasswords.getChildren().addAll(pfieldPassword, pfieldVerify);
-		layoutControl.addRow(2, layoutPasswords);
-		layoutPasswords.setAlignment(Pos.CENTER);
+		layoutControl.setHalignment(labelCount, HPos.CENTER);
+		layoutControl.addRow(3, layoutPasswords);
 
 		// Setup button
 		Button button = new Button("OK");
 		button.setPrefSize(160, 40);
-		layoutControl.addRow(3, button);
-		button.setAlignment(Pos.CENTER);
+		layoutControl.setHalignment(button, HPos.CENTER);
+		layoutControl.addRow(4, button);
 		button.setOnAction(e -> {
 			textArea.appendText("Clicked.\n");
 			if (pfieldPassword.getText().isEmpty()) {
@@ -123,35 +117,34 @@ public class Main extends Application {
 				progressBar.setStyle("-fx-accent: royalblue");
 			}
 		});
-		layoutControl.addRow(4, progressBar);
+		layoutControl.setHalignment(progressBar, HPos.CENTER);
+		layoutControl.addRow(5, progressBar);
 		// Setup progress label
 		progressLabel = new Label("0/0");
 		layoutControl.setHalignment(progressLabel, HPos.CENTER);
-		layoutControl.addRow(5, progressLabel);
+		layoutControl.addRow(6, progressLabel);
 
 		// Setup control panel
+		RowConstraints rcSelBtn = new RowConstraints(60);
+		RowConstraints rcSelLbl = new RowConstraints(10);
 		RowConstraints rcRadioBtn = new RowConstraints(70);
 		RowConstraints rcPField = new RowConstraints(70);
-		RowConstraints rcButton = new RowConstraints(70);
-		RowConstraints rcProgressBar = new RowConstraints(40);
-		RowConstraints rcProgressLabel = new RowConstraints(40);
-		layoutControl.getRowConstraints().addAll(rcRadioBtn, rcPField, rcButton, rcProgressBar, rcProgressLabel);
+		RowConstraints rcButton = new RowConstraints(60);
+		RowConstraints rcProgressBar = new RowConstraints(30);
+		RowConstraints rcProgressLabel = new RowConstraints(20);
+		layoutControl.getRowConstraints().addAll(rcSelBtn, rcSelLbl, rcRadioBtn, rcPField, rcButton, rcProgressBar, rcProgressLabel);
 
 		// Setup console panel
-		ScrollPane scrollPane = new ScrollPane();
-
 		textArea = new TextArea();
-		textArea.prefWidthProperty().bind(primaryStage.widthProperty());
 		textArea.setEditable(false);
 		textArea.setStyle("-fx-font-size: 0.8em;");
 
 		BorderPane layoutConsole = new BorderPane();
-		scrollPane.setContent(textArea);
-		layoutConsole.setCenter(scrollPane);
-
+		layoutConsole.setCenter(textArea);
 		layoutMain.setTop(layoutControl);
-		layoutMain.setBottom(layoutConsole);
+		layoutMain.setCenter(layoutConsole);
 
+		// Setup window
 		Scene scene = new Scene(layoutMain, 200, 400);
 		primaryStage.setScene(scene);
 		primaryStage.show();
