@@ -1,5 +1,6 @@
 package javafxgui;
 
+import Encryption.CipherModel;
 import javafx.application.Application;
 import javafx.concurrent.Task;
 import javafx.geometry.HPos;
@@ -16,6 +17,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 public class Main extends Application {
+	private GuiController controller;
 	private Stage window;
 	private PasswordField pfieldPassword, pfieldVerify;
 	private TextArea textArea;
@@ -34,6 +36,7 @@ public class Main extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		this.controller = new GuiController(new CipherModel(), this);
 		this.window = primaryStage;
 		// Setup window
 		primaryStage.setTitle("AES Cipher");
@@ -49,12 +52,7 @@ public class Main extends Application {
 		Button btnFileSelect = new Button("Select File(s)");
 		btnFileSelect.setPrefSize(160, 40);
 		btnFileSelect.setOnAction(e -> {
-			String path = System.getProperty("user.dir");
-			File directory = new File(path);
-			FileChooser fileChooser = new FileChooser();
-			fileChooser.setInitialDirectory(directory);
-
-			selectFiles(fileChooser.showOpenMultipleDialog(primaryStage));
+			controller.selectFiles();
 		});
 		layoutControl.setHalignment(btnFileSelect, HPos.CENTER);
 		layoutControl.addRow(0, btnFileSelect);
@@ -83,9 +81,9 @@ public class Main extends Application {
 		VBox layoutPasswords = new VBox(10);
 		layoutPasswords.setAlignment(Pos.CENTER);
 		pfieldPassword = new PasswordField();
-		pfieldPassword.textProperty().addListener((value, oldValue, newValue) -> validatePasswords());
+		pfieldPassword.textProperty().addListener((value, oldValue, newValue) -> controller.validatePasswords());
 		pfieldVerify = new PasswordField();
-		pfieldVerify.textProperty().addListener((value, oldValue, newValue) -> validatePasswords());
+		pfieldVerify.textProperty().addListener((value, oldValue, newValue) -> controller.validatePasswords());
 		pfieldPassword.setPromptText("Enter password...");
 		pfieldVerify.setPromptText("Verify password...");
 		layoutPasswords.getChildren().addAll(pfieldPassword, pfieldVerify);
@@ -98,16 +96,7 @@ public class Main extends Application {
 		layoutControl.setHalignment(button, HPos.CENTER);
 		layoutControl.addRow(4, button);
 		button.setOnAction(e -> {
-			textArea.appendText("Clicked.\n");
-			if (pfieldPassword.getText().isEmpty()) {
-				textArea.appendText("Password cannot be empty.\n");
-			} else if (matching) {
-				if (rbtnEncrypt.isSelected()) {
-					encrypt(pfieldPassword.getText());
-				} else {
-					decrypt(pfieldPassword.getText());
-				}
-			}
+			controller.doCipher();
 		});
 
 		// Setup progress bar
