@@ -10,16 +10,19 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import javax.crypto.Cipher;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.List;
 
 public class Main extends Application {
+	private Stage window;
 	private PasswordField pfieldPassword, pfieldVerify;
 	private TextArea textArea;
 	private ProgressBar progressBar;
 	private Label progressLabel;
-
+	private RadioButton rbtnEncrypt;
+	private RadioButton rbtnDecrypt;
 	private File[] selectedFiles = new File[0];
 	private Label labelCount;
 
@@ -31,6 +34,7 @@ public class Main extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		this.window = primaryStage;
 		// Setup window
 		primaryStage.setTitle("AES Cipher");
 		BorderPane layoutMain = new BorderPane();
@@ -64,11 +68,11 @@ public class Main extends Application {
 		ToggleGroup group = new ToggleGroup();
 		VBox layoutRadioBtns = new VBox(10);
 		layoutRadioBtns.setAlignment(Pos.CENTER);
-		RadioButton rbtnEncrypt = new RadioButton("Encrypt");
+		rbtnEncrypt = new RadioButton("Encrypt");
 		rbtnEncrypt.setSelected(true);
 		rbtnEncrypt.setToggleGroup(group);
 
-		RadioButton rbtnDecrypt = new RadioButton("Decrypt");
+		rbtnDecrypt = new RadioButton("Decrypt");
 		rbtnDecrypt.setToggleGroup(group);
 
 		layoutRadioBtns.getChildren().addAll(rbtnEncrypt, rbtnDecrypt);
@@ -217,5 +221,42 @@ public class Main extends Application {
 			this.selectedFiles = files.toArray(new File[0]);
 		}
 		this.labelCount.setText(value);
+	}
+
+	public Stage getWindow() {
+		return window;
+	}
+
+	public Label getSelectedFileLabel() {
+		return labelCount;
+	}
+
+	public TextArea getConsole() {
+		return textArea;
+	}
+
+	public PasswordField getPfieldPassword() {
+		return pfieldPassword;
+	}
+
+	public PasswordField getPfieldVerify() {
+		return pfieldVerify;
+	}
+
+	public int getCipherMode() {
+		if (rbtnEncrypt.isSelected()) {
+			return Cipher.ENCRYPT_MODE;
+		} else if (rbtnDecrypt.isSelected()) {
+			return Cipher.DECRYPT_MODE;
+		}
+		return -1;
+	}
+
+	public ProgressBar getProgressBar() {
+		return this.progressBar;
+	}
+
+	public Label getProgressLabel() {
+		return progressLabel;
 	}
 }
