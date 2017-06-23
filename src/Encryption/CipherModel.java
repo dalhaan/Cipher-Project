@@ -12,7 +12,6 @@ import java.util.List;
  */
 public class CipherModel {
     private File[] selectedFiles = new File[0];
-    private boolean matching = false;
     private String key;
 
     /**
@@ -21,14 +20,6 @@ public class CipherModel {
      */
     public void updateSelectedFiles(File[] selectedFiles) {
         this.selectedFiles = selectedFiles;
-    }
-
-    public void isMatching(boolean matching) {
-        this.matching = matching;
-    }
-
-    public boolean isMatching() {
-        return matching;
     }
 
     public void setKey(String key) {

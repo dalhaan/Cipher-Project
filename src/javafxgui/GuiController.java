@@ -15,6 +15,7 @@ import java.util.List;
 public class GuiController {
     private Main view;
     private CipherModel model;
+    private boolean isMatching = false;
 
     public GuiController(CipherModel model, Main view) {
         this.model = model;
@@ -59,7 +60,7 @@ public class GuiController {
         String password, verify;
         PasswordField pField = view.getPfieldPassword();
         PasswordField pFieldVerify = view.getPfieldVerify();
-        model.isMatching(false);
+        isMatching = false;
         password = view.getPfieldPassword().getText();
         verify = view.getPfieldVerify().getText();
         // Set appropriate colours
@@ -76,7 +77,7 @@ public class GuiController {
                 // If they do match, set both boxes green
                 pField.setStyle("-fx-control-inner-background: #52ff52");
                 pFieldVerify.setStyle("-fx-control-inner-background: #52ff52");
-                model.isMatching(true);
+                isMatching = true;
             }
         }
     }
@@ -85,7 +86,7 @@ public class GuiController {
         view.getConsole().appendText("Clicked.\n");
         if (view.getPfieldPassword().getText().isEmpty()) {
             view.getConsole().appendText("Password cannot be empty.\n");
-        } else if (model.isMatching()) {
+        } else if (isMatching) {
             model.setKey(view.getPfieldPassword().getText());
             if (view.getCipherMode() == Cipher.ENCRYPT_MODE) {
                 encrypt();
